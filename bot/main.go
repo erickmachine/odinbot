@@ -30,9 +30,9 @@ import (
 // ============================================================
 
 const (
-	BotName     = "OdinBOT"
-	OwnerName   = "Erick Machine"
-	OwnerNumber = "5592996529610"
+	BotName       = "OdinBOT"
+	OwnerName     = "Erick Machine"
+	OwnerNumber   = "5592996529610"
 	DefaultPrefix = "#"
 )
 
@@ -41,37 +41,37 @@ const (
 // ============================================================
 
 type GroupConfig struct {
-	JID           string   `json:"jid"`
-	Name          string   `json:"name"`
-	Welcome       bool     `json:"welcome"`
-	WelcomeMsg    string   `json:"welcome_msg"`
-	Goodbye       bool     `json:"goodbye"`
-	GoodbyeMsg    string   `json:"goodbye_msg"`
-	Antilink      bool     `json:"antilink"`
-	Antifake      bool     `json:"antifake"`
-	Antiflood     bool     `json:"antiflood"`
-	NSFW          bool     `json:"nsfw"`
-	AutoSticker   bool     `json:"auto_sticker"`
-	Prefix        string   `json:"prefix"`
-	Active        bool     `json:"active"`
-	AntiPalavrao  bool     `json:"anti_palavrao"`
-	OnlyAdm       bool     `json:"only_adm"`
-	AutoDL        bool     `json:"auto_dl"`
-	AntiBot       bool     `json:"anti_bot"`
-	ModoRPG       bool     `json:"modo_rpg"`
+	JID          string `json:"jid"`
+	Name         string `json:"name"`
+	Welcome      bool   `json:"welcome"`
+	WelcomeMsg   string `json:"welcome_msg"`
+	Goodbye      bool   `json:"goodbye"`
+	GoodbyeMsg   string `json:"goodbye_msg"`
+	Antilink     bool   `json:"antilink"`
+	Antifake     bool   `json:"antifake"`
+	Antiflood    bool   `json:"antiflood"`
+	NSFW         bool   `json:"nsfw"`
+	AutoSticker  bool   `json:"auto_sticker"`
+	Prefix       string `json:"prefix"`
+	Active       bool   `json:"active"`
+	AntiPalavrao bool   `json:"anti_palavrao"`
+	OnlyAdm      bool   `json:"only_adm"`
+	AutoDL       bool   `json:"auto_dl"`
+	AntiBot      bool   `json:"anti_bot"`
+	ModoRPG      bool   `json:"modo_rpg"`
 }
 
 type Rental struct {
-	GroupJID   string  `json:"group_jid"`
-	GroupName  string  `json:"group_name"`
-	OwnerNum   string  `json:"owner_number"`
-	OwnerName  string  `json:"owner_name"`
-	Plan       string  `json:"plan"`
-	StartDate  string  `json:"start_date"`
-	EndDate    string  `json:"end_date"`
-	Value      float64 `json:"value"`
-	Active     bool    `json:"active"`
-	Notes      string  `json:"notes"`
+	GroupJID  string  `json:"group_jid"`
+	GroupName string  `json:"group_name"`
+	OwnerNum  string  `json:"owner_number"`
+	OwnerName string  `json:"owner_name"`
+	Plan      string  `json:"plan"`
+	StartDate string  `json:"start_date"`
+	EndDate   string  `json:"end_date"`
+	Value     float64 `json:"value"`
+	Active    bool    `json:"active"`
+	Notes     string  `json:"notes"`
 }
 
 type Warning struct {
@@ -92,15 +92,15 @@ type BlacklistEntry struct {
 
 type BotData struct {
 	mu         sync.RWMutex
-	Groups     map[string]*GroupConfig    `json:"groups"`
-	Rentals    []Rental                   `json:"rentals"`
-	Warnings   map[string][]Warning       `json:"warnings"`
-	Blacklist  map[string]BlacklistEntry   `json:"blacklist"`
-	BadWords   map[string][]string        `json:"bad_words"`
-	Notes      map[string][]string        `json:"notes"`
-	MutedUsers map[string]map[string]bool `json:"muted_users"`
-	AfkUsers   map[string]string          `json:"afk_users"`
-	Roles      map[string]map[string]string `json:"roles"` // group -> user -> role
+	Groups     map[string]*GroupConfig       `json:"groups"`
+	Rentals    []Rental                       `json:"rentals"`
+	Warnings   map[string][]Warning           `json:"warnings"`
+	Blacklist  map[string]BlacklistEntry      `json:"blacklist"`
+	BadWords   map[string][]string            `json:"bad_words"`
+	Notes      map[string][]string            `json:"notes"`
+	MutedUsers map[string]map[string]bool     `json:"muted_users"`
+	AfkUsers   map[string]string              `json:"afk_users"`
+	Roles      map[string]map[string]string   `json:"roles"` // group -> user -> role
 }
 
 var (
@@ -163,7 +163,6 @@ func main() {
 				fmt.Println("")
 				fmt.Println("[QR] Escaneie o QR acima com seu WhatsApp")
 				fmt.Println("[QR] O QR expira em 20 segundos, aguarde novo se precisar...")
-				// Salvar QR code como texto para o painel web consumir
 				qrData := map[string]string{
 					"code":    evt.Code,
 					"status":  "waiting",
@@ -173,7 +172,6 @@ func main() {
 				_ = os.WriteFile(filepath.Join(dataDir, "qrcode.json"), qrJSON, 0644)
 			} else if evt.Event == "success" {
 				fmt.Println("[QR] Pareamento realizado com sucesso!")
-				// Atualizar status
 				qrData := map[string]string{
 					"code":    "",
 					"status":  "connected",
@@ -200,7 +198,6 @@ func main() {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
 		}
-		// Marcar como conectado
 		qrData := map[string]string{
 			"code":    "",
 			"status":  "connected",
@@ -212,10 +209,8 @@ func main() {
 
 	fmt.Println("[OdinBOT] Conectado com sucesso!")
 
-	// Iniciar verificacao de alugueis expirados
 	go rentalChecker()
 
-	// Aguardar sinal para encerrar
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
@@ -231,7 +226,6 @@ func eventHandler(evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Connected:
 		fmt.Println("[OdinBOT] Evento: Conectado com sucesso!")
-		// Marcar como online
 		_ = client.SendPresence(types.PresenceAvailable)
 	case *events.Message:
 		handleMessage(v)
@@ -241,359 +235,6 @@ func eventHandler(evt interface{}) {
 		handleJoinedGroup(v)
 	case *events.Disconnected:
 		fmt.Println("[OdinBOT] Evento: Desconectado!")
-	}
-}
-
-func handleGroupEvent(evt *events.GroupInfo) {
-	groupJID := evt.JID.String()
-	cfg := getGroupConfig(groupJID)
-
-	// Member join
-	if evt.Join != nil && len(evt.Join) > 0 {
-		if cfg.Welcome {
-			for _, jid := range evt.Join {
-				if isBlacklisted(jid.User) {
-					removeMember(evt.JID, jid)
-					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s esta na lista negra e foi removido.", jid.User))
-					continue
-				}
-				if cfg.Antifake && !strings.HasPrefix(jid.User, "55") {
-					removeMember(evt.JID, jid)
-					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s removido (numero estrangeiro - anti-fake).", jid.User))
-					continue
-				}
-				msg := cfg.WelcomeMsg
-				msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
-				msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
-				msg = strings.ReplaceAll(msg, "{number}", jid.User)
-				sendMention(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg), []string{jid.User})
-			}
-		}
-	}
-
-	// Member leave
-	if evt.Leave != nil && len(evt.Leave) > 0 && cfg.Goodbye {
-		for _, jid := range evt.Leave {
-			msg := cfg.GoodbyeMsg
-			msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
-			msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
-			sendText(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg))
-		}
-	}
-}
-
-func handleMessage(msg *events.Message) {
-	// Ignorar mensagens do proprio bot
-	if msg.Info.IsFromMe {
-		return
-	}
-
-	chat := msg.Info.Chat
-	sender := msg.Info.Sender
-	isGroup := chat.Server == "g.us"
-	text := getMessageText(msg)
-
-	if text == "" {
-		return
-	}
-
-	isOwner := isOwnerNumber(sender.User)
-
-	// Verificar blacklist
-	if isBlacklisted(sender.User) && isGroup {
-		removeMember(chat, sender)
-		sendText(chat, fmt.Sprintf("*[OdinBOT]* Usuario %s esta na lista negra e foi removido.", sender.User))
-		return
-	}
-
-	// Verificar AFK
-	checkAfk(chat, sender, text)
-
-	if isGroup {
-		groupJID := chat.String()
-		cfg := getGroupConfig(groupJID)
-
-		// Anti-link
-		if cfg.Antilink && !isOwner && !isGroupAdmin(chat, sender) {
-			if containsLink(text) {
-				removeMember(chat, sender)
-				sendText(chat, fmt.Sprintf("*[OdinBOT]* @%s removido por enviar link.", sender.User))
-				return
-			}
-		}
-
-		// Anti-palavrao
-		if cfg.AntiPalavrao && !isOwner && !isGroupAdmin(chat, sender) {
-			if containsBadWord(groupJID, text) {
-				addWarningAuto(groupJID, sender, "Palavra proibida detectada")
-				sendText(chat, fmt.Sprintf("*[OdinBOT]* @%s cuidado com as palavras! Advertencia aplicada.", sender.User))
-				return
-			}
-		}
-
-		// Only admin mode
-		if cfg.OnlyAdm && !isOwner && !isGroupAdmin(chat, sender) {
-			return
-		}
-	}
-
-	// Processar comandos
-	prefix := getPrefix(chat.String())
-	if !strings.HasPrefix(text, prefix) {
-		return
-	}
-
-	parts := strings.Fields(text[len(prefix):])
-	if len(parts) == 0 {
-		return
-	}
-
-	cmd := strings.ToLower(parts[0])
-	args := ""
-	if len(parts) > 1 {
-		args = strings.Join(parts[1:], " ")
-	}
-
-	// Comandos de DONO (somente Erick Machine)
-	if isOwner {
-		switch cmd {
-		case "aluguel", "add_contrat":
-			cmdAluguel(chat, args)
-			return
-		case "verificar_aluguel":
-			cmdVerificarAluguel(chat)
-			return
-		case "bcaluguel":
-			cmdBroadcastAluguel(chat, args)
-			return
-		case "bc":
-			cmdBroadcast(args)
-			return
-		case "join":
-			cmdJoin(args)
-			return
-		case "sairgp", "exitgp":
-			cmdLeaveGroup(chat)
-			return
-		case "listanegra":
-			if args != "" {
-				cmdAddBlacklist(chat, sender, args)
-			} else {
-				cmdShowBlacklist(chat)
-			}
-			return
-		case "tirardalista":
-			cmdRemoveBlacklist(chat, args)
-			return
-		case "addgold":
-			return
-		case "zerar_gold":
-			return
-		case "resetlevel":
-			return
-		case "nuke":
-			cmdNuke(chat)
-			return
-		case "grupos":
-			cmdListGroups(chat)
-			return
-		case "adddono":
-			return
-		case "cargo":
-			cmdSetRole(chat, msg, args)
-			return
-		}
-	}
-
-	// Comandos ADM (admin do grupo ou dono)
-	if isGroup && (isOwner || isGroupAdmin(chat, sender)) {
-		switch cmd {
-		case "ban":
-			cmdBan(chat, msg)
-			return
-		case "advertir", "adverter":
-			cmdWarn(chat, msg, sender, args)
-			return
-		case "checkwarnings", "ver_adv":
-			cmdCheckWarnings(chat, msg)
-			return
-		case "removewarnings", "rm_adv":
-			cmdRemoveWarning(chat, msg)
-			return
-		case "clearwarnings", "limpar_adv":
-			cmdClearWarnings(chat)
-			return
-		case "advertidos", "lista_adv":
-			cmdListWarnings(chat)
-			return
-		case "mute":
-			cmdMute(chat, msg)
-			return
-		case "desmute":
-			cmdUnmute(chat, msg)
-			return
-		case "promover":
-			cmdPromote(chat, msg)
-			return
-		case "rebaixar":
-			cmdDemote(chat, msg)
-			return
-		case "bemvindo":
-			cmdToggleWelcome(chat)
-			return
-		case "antilink":
-			cmdToggleAntilink(chat)
-			return
-		case "antifake":
-			cmdToggleAntifake(chat)
-			return
-		case "antipalavra":
-			cmdToggleAntiPalavrao(chat)
-			return
-		case "autosticker":
-			cmdToggleAutoSticker(chat)
-			return
-		case "autodl":
-			cmdToggleAutoDL(chat)
-			return
-		case "so_adm":
-			cmdToggleOnlyAdmin(chat)
-			return
-		case "fechargp", "colloportus":
-			cmdCloseGroup(chat)
-			return
-		case "abrirgp", "alohomora":
-			cmdOpenGroup(chat)
-			return
-		case "nomegp":
-			cmdSetGroupName(chat, args)
-			return
-		case "descgp":
-			cmdSetGroupDesc(chat, args)
-			return
-		case "linkgp":
-			cmdGetGroupLink(chat)
-			return
-		case "tagall", "marcar":
-			cmdTagAll(chat, args)
-			return
-		case "totag", "hidetag":
-			cmdHideTag(chat, args)
-			return
-		case "aceitar", "aceitarmembro":
-			return
-		case "banghost":
-			cmdBanGhost(chat)
-			return
-		case "banfakes", "banfake":
-			cmdBanFakes(chat)
-			return
-		case "inativos":
-			return
-		case "sorteio":
-			cmdSorteio(chat)
-			return
-		case "status", "ativacoes":
-			cmdGroupStatus(chat)
-			return
-		case "addpalavra", "add_palavra":
-			cmdAddBadWord(chat, args)
-			return
-		case "delpalavra", "rm_palavra":
-			cmdDelBadWord(chat, args)
-			return
-		case "listapalavrao":
-			cmdListBadWords(chat)
-			return
-		case "anotar":
-			cmdAddNote(chat, args)
-			return
-		case "anotacao", "anotacoes":
-			cmdShowNotes(chat)
-			return
-		case "tirar_nota", "rmnota":
-			cmdDelNote(chat, args)
-			return
-		case "deletar":
-			return
-		case "grupoinfo", "gpinfo":
-			cmdGroupInfo(chat)
-			return
-		case "admins":
-			cmdListAdmins(chat)
-			return
-		case "roleta":
-			cmdRoleta(chat)
-			return
-		case "setmsg", "setmsgban":
-			return
-		case "block", "bloquearcmd":
-			return
-		case "liberarcmd":
-			return
-		}
-	}
-
-	// Comandos de TODOS
-	switch cmd {
-	case "menu":
-		cmdMenu(chat, sender, isOwner, isGroup)
-	case "ping":
-		cmdPing(chat)
-	case "info", "infobot":
-		cmdInfo(chat)
-	case "dono", "criador":
-		cmdDono(chat)
-	case "sticker", "s", "fig":
-		cmdSticker(chat, msg)
-	case "toimg":
-		cmdToImg(chat, msg)
-	case "perfil", "me":
-		cmdProfile(chat, sender)
-	case "simi":
-		cmdSimi(chat, args)
-	case "traduzir":
-		cmdTraduzir(chat, args)
-	case "clima":
-		cmdClima(chat, args)
-	case "signo":
-		cmdSigno(chat, args)
-	case "afk", "ausente":
-		cmdSetAfk(chat, sender, args)
-	case "ativo":
-		cmdRemoveAfk(chat, sender)
-	case "listarafk", "statusafk":
-		cmdListAfk(chat)
-	case "rankativo", "rankativos":
-		cmdRankAtivos(chat)
-	case "ppt":
-		cmdPPT(chat, sender, args)
-	case "chance":
-		cmdChance(chat, args)
-	case "sorte":
-		cmdSorte(chat, sender)
-	case "cantadas":
-		cmdCantada(chat)
-	case "fatos":
-		cmdFatos(chat)
-	case "conselho", "conselhobiblico":
-		cmdConselho(chat)
-	case "calculadora", "calcular":
-		cmdCalc(chat, args)
-	case "sn":
-		cmdSimNao(chat)
-	case "dado":
-		cmdDado(chat)
-	case "moedas":
-		cmdMoedas(chat)
-	case "help", "ajuda":
-		cmdHelp(chat, sender)
-	case "alugar":
-		cmdAlugarInfo(chat)
-	case "regras":
-		cmdRegras(chat)
-	case "bug", "sugestao":
-		cmdBugReport(chat, sender, args)
 	}
 }
 
@@ -722,7 +363,6 @@ func containsLink(text string) bool {
 	links := []string{"http://", "https://", "www.", "chat.whatsapp.com", ".com/", ".br/", ".net/", "bit.ly", "wa.me"}
 	for _, l := range links {
 		if strings.Contains(lower, l) {
-			// Permitir youtube, instagram, tiktok
 			allowed := []string{"youtube.com", "youtu.be", "instagram.com", "tiktok.com"}
 			for _, a := range allowed {
 				if strings.Contains(lower, a) {
@@ -785,18 +425,312 @@ func getMentionedJID(msg *events.Message) *types.JID {
 }
 
 // ============================================================
-// Group Events
+// Message Handler
 // ============================================================
 
-func handleGroupEvent(evt *events.GroupInfo) {
-	// Grupo atualizado
-}
+func handleMessage(msg *events.Message) {
+	if msg.Info.IsFromMe {
+		return
+	}
 
-func handleJoinedGroup(evt *events.JoinedGroup) {
-	sendText(evt.JID, fmt.Sprintf(
-		"*%s conectado!*\n\nOla! Sou o %s, bot do %s.\nUse *%smenu* para ver meus comandos.\nDono: %s",
-		BotName, BotName, OwnerName, DefaultPrefix, OwnerName,
-	))
+	chat := msg.Info.Chat
+	sender := msg.Info.Sender
+	isGroup := chat.Server == "g.us"
+	text := getMessageText(msg)
+
+	if text == "" {
+		return
+	}
+
+	isOwner := isOwnerNumber(sender.User)
+
+	if isBlacklisted(sender.User) && isGroup {
+		removeMember(chat, sender)
+		sendText(chat, fmt.Sprintf("*[OdinBOT]* Usuario %s esta na lista negra e foi removido.", sender.User))
+		return
+	}
+
+	checkAfk(chat, sender, text)
+
+	if isGroup {
+		groupJID := chat.String()
+		cfg := getGroupConfig(groupJID)
+
+		if cfg.Antilink && !isOwner && !isGroupAdmin(chat, sender) {
+			if containsLink(text) {
+				removeMember(chat, sender)
+				sendText(chat, fmt.Sprintf("*[OdinBOT]* @%s removido por enviar link.", sender.User))
+				return
+			}
+		}
+
+		if cfg.AntiPalavrao && !isOwner && !isGroupAdmin(chat, sender) {
+			if containsBadWord(groupJID, text) {
+				addWarningAuto(groupJID, sender, "Palavra proibida detectada")
+				sendText(chat, fmt.Sprintf("*[OdinBOT]* @%s cuidado com as palavras! Advertencia aplicada.", sender.User))
+				return
+			}
+		}
+
+		if cfg.OnlyAdm && !isOwner && !isGroupAdmin(chat, sender) {
+			return
+		}
+	}
+
+	prefix := getPrefix(chat.String())
+	if !strings.HasPrefix(text, prefix) {
+		return
+	}
+
+	parts := strings.Fields(text[len(prefix):])
+	if len(parts) == 0 {
+		return
+	}
+
+	cmd := strings.ToLower(parts[0])
+	args := ""
+	if len(parts) > 1 {
+		args = strings.Join(parts[1:], " ")
+	}
+
+	if isOwner {
+		switch cmd {
+		case "aluguel", "add_contrat":
+			cmdAluguel(chat, args)
+			return
+		case "verificar_aluguel":
+			cmdVerificarAluguel(chat)
+			return
+		case "bcaluguel":
+			cmdBroadcastAluguel(chat, args)
+			return
+		case "bc":
+			cmdBroadcast(args)
+			return
+		case "join":
+			cmdJoin(args)
+			return
+		case "sairgp", "exitgp":
+			cmdLeaveGroup(chat)
+			return
+		case "listanegra":
+			if args != "" {
+				cmdAddBlacklist(chat, sender, args)
+			} else {
+				cmdShowBlacklist(chat)
+			}
+			return
+		case "tirardalista":
+			cmdRemoveBlacklist(chat, args)
+			return
+		case "addgold":
+			return
+		case "zerar_gold":
+			return
+		case "resetlevel":
+			return
+		case "nuke":
+			cmdNuke(chat)
+			return
+		case "grupos":
+			cmdListGroups(chat)
+			return
+		case "adddono":
+			return
+		case "cargo":
+			cmdSetRole(chat, msg, args)
+			return
+		}
+	}
+
+	if isGroup && (isOwner || isGroupAdmin(chat, sender)) {
+		switch cmd {
+		case "ban":
+			cmdBan(chat, msg)
+			return
+		case "advertir", "adverter":
+			cmdWarn(chat, msg, sender, args)
+			return
+		case "checkwarnings", "ver_adv":
+			cmdCheckWarnings(chat, msg)
+			return
+		case "removewarnings", "rm_adv":
+			cmdRemoveWarning(chat, msg)
+			return
+		case "clearwarnings", "limpar_adv":
+			cmdClearWarnings(chat)
+			return
+		case "advertidos", "lista_adv":
+			cmdListWarnings(chat)
+			return
+		case "mute":
+			cmdMute(chat, msg)
+			return
+		case "desmute":
+			cmdUnmute(chat, msg)
+			return
+		case "promover":
+			cmdPromote(chat, msg)
+			return
+		case "rebaixar":
+			cmdDemote(chat, msg)
+			return
+		case "bemvindo":
+			cmdToggleWelcome(chat)
+			return
+		case "antilink":
+			cmdToggleAntilink(chat)
+			return
+		case "antifake":
+			cmdToggleAntifake(chat)
+			return
+		case "antipalavra":
+			cmdToggleAntiPalavrao(chat)
+			return
+		case "autosticker":
+			cmdToggleAutoSticker(chat)
+			return
+		case "autodl":
+			cmdToggleAutoDL(chat)
+			return
+		case "so_adm":
+			cmdToggleOnlyAdmin(chat)
+			return
+		case "fechargp", "colloportus":
+			cmdCloseGroup(chat)
+			return
+		case "abrirgp", "alohomora":
+			cmdOpenGroup(chat)
+			return
+		case "nomegp":
+			cmdSetGroupName(chat, args)
+			return
+		case "descgp":
+			cmdSetGroupDesc(chat, args)
+			return
+		case "linkgp":
+			cmdGetGroupLink(chat)
+			return
+		case "tagall", "marcar":
+			cmdTagAll(chat, args)
+			return
+		case "totag", "hidetag":
+			cmdHideTag(chat, args)
+			return
+		case "aceitar", "aceitarmembro":
+			return
+		case "banghost":
+			cmdBanGhost(chat)
+			return
+		case "banfakes", "banfake":
+			cmdBanFakes(chat)
+			return
+		case "inativos":
+			return
+		case "sorteio":
+			cmdSorteio(chat)
+			return
+		case "status", "ativacoes":
+			cmdGroupStatus(chat)
+			return
+		case "addpalavra", "add_palavra":
+			cmdAddBadWord(chat, args)
+			return
+		case "delpalavra", "rm_palavra":
+			cmdDelBadWord(chat, args)
+			return
+		case "listapalavrao":
+			cmdListBadWords(chat)
+			return
+		case "anotar":
+			cmdAddNote(chat, args)
+			return
+		case "anotacao", "anotacoes":
+			cmdShowNotes(chat)
+			return
+		case "tirar_nota", "rmnota":
+			cmdDelNote(chat, args)
+			return
+		case "deletar":
+			return
+		case "grupoinfo", "gpinfo":
+			cmdGroupInfo(chat)
+			return
+		case "admins":
+			cmdListAdmins(chat)
+			return
+		case "roleta":
+			cmdRoleta(chat)
+			return
+		case "setmsg", "setmsgban":
+			return
+		case "block", "bloquearcmd":
+			return
+		case "liberarcmd":
+			return
+		}
+	}
+
+	switch cmd {
+	case "menu":
+		cmdMenu(chat, sender, isOwner, isGroup)
+	case "ping":
+		cmdPing(chat)
+	case "info", "infobot":
+		cmdInfo(chat)
+	case "dono", "criador":
+		cmdDono(chat)
+	case "sticker", "s", "fig":
+		cmdSticker(chat, msg)
+	case "toimg":
+		cmdToImg(chat, msg)
+	case "perfil", "me":
+		cmdProfile(chat, sender)
+	case "simi":
+		cmdSimi(chat, args)
+	case "traduzir":
+		cmdTraduzir(chat, args)
+	case "clima":
+		cmdClima(chat, args)
+	case "signo":
+		cmdSigno(chat, args)
+	case "afk", "ausente":
+		cmdSetAfk(chat, sender, args)
+	case "ativo":
+		cmdRemoveAfk(chat, sender)
+	case "listarafk", "statusafk":
+		cmdListAfk(chat)
+	case "rankativo", "rankativos":
+		cmdRankAtivos(chat)
+	case "ppt":
+		cmdPPT(chat, sender, args)
+	case "chance":
+		cmdChance(chat, args)
+	case "sorte":
+		cmdSorte(chat, sender)
+	case "cantadas":
+		cmdCantada(chat)
+	case "fatos":
+		cmdFatos(chat)
+	case "conselho", "conselhobiblico":
+		cmdConselho(chat)
+	case "calculadora", "calcular":
+		cmdCalc(chat, args)
+	case "sn":
+		cmdSimNao(chat)
+	case "dado":
+		cmdDado(chat)
+	case "moedas":
+		cmdMoedas(chat)
+	case "help", "ajuda":
+		cmdHelp(chat, sender)
+	case "alugar":
+		cmdAlugarInfo(chat)
+	case "regras":
+		cmdRegras(chat)
+	case "bug", "sugestao":
+		cmdBugReport(chat, sender, args)
+	}
 }
 
 // ============================================================
@@ -1068,7 +1002,6 @@ func cmdWarn(chat types.JID, msg *events.Message, issuer types.JID, reason strin
 
 	if count >= 3 {
 		removeMember(chat, *target)
-		// Adicionar na blacklist
 		botData.mu.Lock()
 		botData.Blacklist[target.User] = BlacklistEntry{
 			Number:  target.User,
@@ -1419,7 +1352,6 @@ func cmdBanGhost(chat types.JID) {
 	var ghosts []types.JID
 	for _, p := range info.Participants {
 		if !p.IsAdmin && !p.IsSuperAdmin && !isOwnerNumber(p.JID.User) {
-			// Ghost = sem foto de perfil (simplificacao)
 			_, err := client.GetProfilePictureInfo(p.JID, &whatsmeow.GetProfilePictureParams{})
 			if err != nil {
 				ghosts = append(ghosts, p.JID)
@@ -1579,7 +1511,7 @@ func cmdDelNote(chat types.JID, idx string) {
 	gJID := chat.String()
 	var i int
 	fmt.Sscanf(idx, "%d", &i)
-	i-- // 1-indexed
+	i--
 	botData.mu.Lock()
 	notes := botData.Notes[gJID]
 	if i >= 0 && i < len(notes) {
@@ -2052,10 +1984,56 @@ func cmdBugReport(chat types.JID, sender types.JID, text string) {
 		sendText(chat, "*[OdinBOT]* Descreva o bug/sugestao depois do comando.")
 		return
 	}
-	// Enviar para o dono
 	ownerJID := types.NewJID(OwnerNumber, "s.whatsapp.net")
 	sendText(ownerJID, fmt.Sprintf("*[OdinBOT] Bug/Sugestao*\n\nDe: @%s\nGrupo: %s\n\n%s", sender.User, chat.String(), text))
 	sendText(chat, "*[OdinBOT]* Obrigado! Seu relato foi enviado ao dono.")
+}
+
+// ============================================================
+// Group Event Handler (correta, agora única)
+// ============================================================
+
+func handleGroupEvent(evt *events.GroupInfo) {
+	groupJID := evt.JID.String()
+	cfg := getGroupConfig(groupJID)
+
+	if evt.Join != nil && len(evt.Join) > 0 {
+		if cfg.Welcome {
+			for _, jid := range evt.Join {
+				if isBlacklisted(jid.User) {
+					removeMember(evt.JID, jid)
+					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s esta na lista negra e foi removido.", jid.User))
+					continue
+				}
+				if cfg.Antifake && !strings.HasPrefix(jid.User, "55") {
+					removeMember(evt.JID, jid)
+					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s removido (numero estrangeiro - anti-fake).", jid.User))
+					continue
+				}
+				msg := cfg.WelcomeMsg
+				msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
+				msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
+				msg = strings.ReplaceAll(msg, "{number}", jid.User)
+				sendMention(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg), []string{jid.User})
+			}
+		}
+	}
+
+	if evt.Leave != nil && len(evt.Leave) > 0 && cfg.Goodbye {
+		for _, jid := range evt.Leave {
+			msg := cfg.GoodbyeMsg
+			msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
+			msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
+			sendText(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg))
+		}
+	}
+}
+
+func handleJoinedGroup(evt *events.JoinedGroup) {
+	sendText(evt.JID, fmt.Sprintf(
+		"*%s conectado!*\n\nOla! Sou o %s, bot do %s.\nUse *%smenu* para ver meus comandos.\nDono: %s",
+		BotName, BotName, OwnerName, DefaultPrefix, OwnerName,
+	))
 }
 
 // ============================================================
@@ -2105,7 +2083,6 @@ func rentalChecker() {
 						botData.Rentals[i].EndDate, OwnerName))
 				}
 			} else if endDate.Sub(now).Hours() < 72 {
-				// Aviso 3 dias antes
 				jid, err := types.ParseJID(botData.Rentals[i].GroupJID)
 				if err == nil {
 					days := int(endDate.Sub(now).Hours() / 24)
@@ -2147,7 +2124,6 @@ func loadBotData() *BotData {
 		return data
 	}
 
-	// Garantir mapas nao-nil
 	if data.Groups == nil {
 		data.Groups = make(map[string]*GroupConfig)
 	}
