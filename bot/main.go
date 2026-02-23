@@ -281,7 +281,6 @@ func handleGroupEvent(evt *events.GroupInfo) {
 		}
 	}
 }
-}
 
 func handleMessage(msg *events.Message) {
 	// Ignorar mensagens do proprio bot
