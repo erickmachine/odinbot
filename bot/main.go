@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -15,7 +16,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
-	waE2E "go.mau.fi/whatsmeow/binary/proto"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -29,9 +30,9 @@ import (
 // ============================================================
 
 const (
-	BotName       = "OdinBOT"
-	OwnerName     = "Erick Machine"
-	OwnerNumber   = "5592996529610"
+	BotName     = "OdinBOT"
+	OwnerName   = "Erick Machine"
+	OwnerNumber = "5592996529610"
 	DefaultPrefix = "#"
 )
 
@@ -40,37 +41,37 @@ const (
 // ============================================================
 
 type GroupConfig struct {
-	JID          string `json:"jid"`
-	Name         string `json:"name"`
-	Welcome      bool   `json:"welcome"`
-	WelcomeMsg   string `json:"welcome_msg"`
-	Goodbye      bool   `json:"goodbye"`
-	GoodbyeMsg   string `json:"goodbye_msg"`
-	Antilink     bool   `json:"antilink"`
-	Antifake     bool   `json:"antifake"`
-	Antiflood    bool   `json:"antiflood"`
-	NSFW         bool   `json:"nsfw"`
-	AutoSticker  bool   `json:"auto_sticker"`
-	Prefix       string `json:"prefix"`
-	Active       bool   `json:"active"`
-	AntiPalavrao bool   `json:"anti_palavrao"`
-	OnlyAdm      bool   `json:"only_adm"`
-	AutoDL       bool   `json:"auto_dl"`
-	AntiBot      bool   `json:"anti_bot"`
-	ModoRPG      bool   `json:"modo_rpg"`
+	JID           string   `json:"jid"`
+	Name          string   `json:"name"`
+	Welcome       bool     `json:"welcome"`
+	WelcomeMsg    string   `json:"welcome_msg"`
+	Goodbye       bool     `json:"goodbye"`
+	GoodbyeMsg    string   `json:"goodbye_msg"`
+	Antilink      bool     `json:"antilink"`
+	Antifake      bool     `json:"antifake"`
+	Antiflood     bool     `json:"antiflood"`
+	NSFW          bool     `json:"nsfw"`
+	AutoSticker   bool     `json:"auto_sticker"`
+	Prefix        string   `json:"prefix"`
+	Active        bool     `json:"active"`
+	AntiPalavrao  bool     `json:"anti_palavrao"`
+	OnlyAdm       bool     `json:"only_adm"`
+	AutoDL        bool     `json:"auto_dl"`
+	AntiBot       bool     `json:"anti_bot"`
+	ModoRPG       bool     `json:"modo_rpg"`
 }
 
 type Rental struct {
-	GroupJID  string  `json:"group_jid"`
-	GroupName string  `json:"group_name"`
-	OwnerNum  string  `json:"owner_number"`
-	OwnerName string  `json:"owner_name"`
-	Plan      string  `json:"plan"`
-	StartDate string  `json:"start_date"`
-	EndDate   string  `json:"end_date"`
-	Value     float64 `json:"value"`
-	Active    bool    `json:"active"`
-	Notes     string  `json:"notes"`
+	GroupJID   string  `json:"group_jid"`
+	GroupName  string  `json:"group_name"`
+	OwnerNum   string  `json:"owner_number"`
+	OwnerName  string  `json:"owner_name"`
+	Plan       string  `json:"plan"`
+	StartDate  string  `json:"start_date"`
+	EndDate    string  `json:"end_date"`
+	Value      float64 `json:"value"`
+	Active     bool    `json:"active"`
+	Notes      string  `json:"notes"`
 }
 
 type Warning struct {
@@ -91,15 +92,15 @@ type BlacklistEntry struct {
 
 type BotData struct {
 	mu         sync.RWMutex
-	Groups     map[string]*GroupConfig       `json:"groups"`
-	Rentals    []Rental                       `json:"rentals"`
-	Warnings   map[string][]Warning           `json:"warnings"`
-	Blacklist  map[string]BlacklistEntry      `json:"blacklist"`
-	BadWords   map[string][]string            `json:"bad_words"`
-	Notes      map[string][]string            `json:"notes"`
-	MutedUsers map[string]map[string]bool     `json:"muted_users"`
-	AfkUsers   map[string]string              `json:"afk_users"`
-	Roles      map[string]map[string]string   `json:"roles"` // group -> user -> role
+	Groups     map[string]*GroupConfig    `json:"groups"`
+	Rentals    []Rental                   `json:"rentals"`
+	Warnings   map[string][]Warning       `json:"warnings"`
+	Blacklist  map[string]BlacklistEntry   `json:"blacklist"`
+	BadWords   map[string][]string        `json:"bad_words"`
+	Notes      map[string][]string        `json:"notes"`
+	MutedUsers map[string]map[string]bool `json:"muted_users"`
+	AfkUsers   map[string]string          `json:"afk_users"`
+	Roles      map[string]map[string]string `json:"roles"` // group -> user -> role
 }
 
 var (
@@ -145,7 +146,7 @@ func main() {
 	client.AddEventHandler(eventHandler)
 
 	if client.Store.ID == nil {
-		qrChan, _ := client.GetQRChannel()
+		qrChan, _ := client.GetQRChannel(context.Background())
 		if err := client.Connect(); err != nil {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
@@ -162,6 +163,7 @@ func main() {
 				fmt.Println("")
 				fmt.Println("[QR] Escaneie o QR acima com seu WhatsApp")
 				fmt.Println("[QR] O QR expira em 20 segundos, aguarde novo se precisar...")
+				// Salvar QR code como texto para o painel web consumir
 				qrData := map[string]string{
 					"code":    evt.Code,
 					"status":  "waiting",
@@ -171,6 +173,7 @@ func main() {
 				_ = os.WriteFile(filepath.Join(dataDir, "qrcode.json"), qrJSON, 0644)
 			} else if evt.Event == "success" {
 				fmt.Println("[QR] Pareamento realizado com sucesso!")
+				// Atualizar status
 				qrData := map[string]string{
 					"code":    "",
 					"status":  "connected",
@@ -197,6 +200,7 @@ func main() {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
 		}
+		// Marcar como conectado
 		qrData := map[string]string{
 			"code":    "",
 			"status":  "connected",
@@ -208,8 +212,10 @@ func main() {
 
 	fmt.Println("[OdinBOT] Conectado com sucesso!")
 
+	// Iniciar verificacao de alugueis expirados
 	go rentalChecker()
 
+	// Aguardar sinal para encerrar
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
@@ -225,6 +231,7 @@ func eventHandler(evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Connected:
 		fmt.Println("[OdinBOT] Evento: Conectado com sucesso!")
+		// Marcar como online
 		_ = client.SendPresence(types.PresenceAvailable)
 	case *events.Message:
 		handleMessage(v)
@@ -237,197 +244,46 @@ func eventHandler(evt interface{}) {
 	}
 }
 
-// ============================================================
-// Message Helpers
-// ============================================================
+func handleGroupEvent(evt *events.GroupInfo) {
+	groupJID := evt.JID.String()
+	cfg := getGroupConfig(groupJID)
 
-func getMessageText(msg *events.Message) string {
-	if msg.Message == nil {
-		return ""
-	}
-	if msg.Message.Conversation != nil {
-		return *msg.Message.Conversation
-	}
-	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
-		return *msg.Message.ExtendedTextMessage.Text
-	}
-	if msg.Message.ImageMessage != nil && msg.Message.ImageMessage.Caption != nil {
-		return *msg.Message.ImageMessage.Caption
-	}
-	if msg.Message.VideoMessage != nil && msg.Message.VideoMessage.Caption != nil {
-		return *msg.Message.VideoMessage.Caption
-	}
-	return ""
-}
-
-func sendText(chat types.JID, text string) {
-	msg := &waE2E.Message{
-		Conversation: proto.String(text),
-	}
-	_, err := client.SendMessage(chat, msg)
-	if err != nil {
-		fmt.Printf("[ERRO] Enviar mensagem: %v\n", err)
-	}
-}
-
-func sendMention(chat types.JID, text string, mentions []string) {
-	jids := make([]string, len(mentions))
-	for i, m := range mentions {
-		jids[i] = m + "@s.whatsapp.net"
-	}
-	msg := &waE2E.Message{
-		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
-			Text: proto.String(text),
-			ContextInfo: &waE2E.ContextInfo{
-				MentionedJid: jids,
-			},
-		},
-	}
-	_, err := client.SendMessage(chat, msg)
-	if err != nil {
-		fmt.Printf("[ERRO] Enviar mention: %v\n", err)
-	}
-}
-
-func isOwnerNumber(number string) bool {
-	return number == OwnerNumber || number == "5592996529610"
-}
-
-func getPrefix(groupJID string) string {
-	botData.mu.RLock()
-	defer botData.mu.RUnlock()
-	if cfg, ok := botData.Groups[groupJID]; ok && cfg.Prefix != "" {
-		return cfg.Prefix
-	}
-	return DefaultPrefix
-}
-
-// ============================================================
-// Group Helpers
-// ============================================================
-
-func getGroupConfig(jid string) *GroupConfig {
-	botData.mu.Lock()
-	defer botData.mu.Unlock()
-	if cfg, ok := botData.Groups[jid]; ok {
-		return cfg
-	}
-	cfg := &GroupConfig{
-		JID:        jid,
-		Welcome:    true,
-		WelcomeMsg: "Bem-vindo(a) ao grupo! Leia as regras.",
-		Goodbye:    true,
-		GoodbyeMsg: "Ate mais! Sentiremos sua falta.",
-		Prefix:     DefaultPrefix,
-		Active:     true,
-	}
-	botData.Groups[jid] = cfg
-	saveBotData()
-	return cfg
-}
-
-func isGroupAdmin(chat types.JID, user types.JID) bool {
-	info, err := client.GetGroupInfo(chat)
-	if err != nil {
-		return false
-	}
-	for _, p := range info.Participants {
-		if p.JID.User == user.User {
-			return p.IsAdmin || p.IsSuperAdmin
-		}
-	}
-	return false
-}
-
-func isBotAdmin(chat types.JID) bool {
-	if client.Store.ID == nil {
-		return false
-	}
-	return isGroupAdmin(chat, *client.Store.ID)
-}
-
-func removeMember(chat types.JID, user types.JID) {
-	if !isBotAdmin(chat) {
-		sendText(chat, "*[OdinBOT]* Preciso ser admin para remover membros.")
-		return
-	}
-	_, err := client.UpdateGroupParticipants(chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
-	if err != nil {
-		fmt.Printf("[ERRO] Remover membro: %v\n", err)
-	}
-}
-
-func containsLink(text string) bool {
-	lower := strings.ToLower(text)
-	links := []string{"http://", "https://", "www.", "chat.whatsapp.com", ".com/", ".br/", ".net/", "bit.ly", "wa.me"}
-	for _, l := range links {
-		if strings.Contains(lower, l) {
-			allowed := []string{"youtube.com", "youtu.be", "instagram.com", "tiktok.com"}
-			for _, a := range allowed {
-				if strings.Contains(lower, a) {
-					return false
+	// Member join
+	if evt.Join != nil && len(evt.Join) > 0 {
+		if cfg.Welcome {
+			for _, jid := range evt.Join {
+				if isBlacklisted(jid.User) {
+					removeMember(evt.JID, jid)
+					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s esta na lista negra e foi removido.", jid.User))
+					continue
 				}
+				if cfg.Antifake && !strings.HasPrefix(jid.User, "55") {
+					removeMember(evt.JID, jid)
+					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s removido (numero estrangeiro - anti-fake).", jid.User))
+					continue
+				}
+				msg := cfg.WelcomeMsg
+				msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
+				msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
+				msg = strings.ReplaceAll(msg, "{number}", jid.User)
+				sendMention(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg), []string{jid.User})
 			}
-			return true
 		}
 	}
-	return false
-}
 
-func containsBadWord(groupJID, text string) bool {
-	botData.mu.RLock()
-	defer botData.mu.RUnlock()
-	words, ok := botData.BadWords[groupJID]
-	if !ok {
-		return false
-	}
-	lower := strings.ToLower(text)
-	for _, w := range words {
-		if strings.Contains(lower, strings.ToLower(w)) {
-			return true
+	// Member leave
+	if evt.Leave != nil && len(evt.Leave) > 0 && cfg.Goodbye {
+		for _, jid := range evt.Leave {
+			msg := cfg.GoodbyeMsg
+			msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
+			msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
+			sendText(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg))
 		}
 	}
-	return false
 }
-
-func isBlacklisted(number string) bool {
-	botData.mu.RLock()
-	defer botData.mu.RUnlock()
-	_, ok := botData.Blacklist[number]
-	return ok
-}
-
-func getMentionedJID(msg *events.Message) *types.JID {
-	if msg.Message == nil {
-		return nil
-	}
-	var ctx *waE2E.ContextInfo
-	if msg.Message.ExtendedTextMessage != nil {
-		ctx = msg.Message.ExtendedTextMessage.GetContextInfo()
-	}
-	if ctx == nil {
-		return nil
-	}
-	if len(ctx.MentionedJid) > 0 {
-		jid, err := types.ParseJID(ctx.MentionedJid[0])
-		if err == nil {
-			return &jid
-		}
-	}
-	if ctx.Participant != nil {
-		jid, err := types.ParseJID(*ctx.Participant)
-		if err == nil {
-			return &jid
-		}
-	}
-	return nil
-}
-
-// ============================================================
-// Message Handler
-// ============================================================
 
 func handleMessage(msg *events.Message) {
+	// Ignorar mensagens do proprio bot
 	if msg.Info.IsFromMe {
 		return
 	}
@@ -443,18 +299,21 @@ func handleMessage(msg *events.Message) {
 
 	isOwner := isOwnerNumber(sender.User)
 
+	// Verificar blacklist
 	if isBlacklisted(sender.User) && isGroup {
 		removeMember(chat, sender)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* Usuario %s esta na lista negra e foi removido.", sender.User))
 		return
 	}
 
+	// Verificar AFK
 	checkAfk(chat, sender, text)
 
 	if isGroup {
 		groupJID := chat.String()
 		cfg := getGroupConfig(groupJID)
 
+		// Anti-link
 		if cfg.Antilink && !isOwner && !isGroupAdmin(chat, sender) {
 			if containsLink(text) {
 				removeMember(chat, sender)
@@ -463,6 +322,7 @@ func handleMessage(msg *events.Message) {
 			}
 		}
 
+		// Anti-palavrao
 		if cfg.AntiPalavrao && !isOwner && !isGroupAdmin(chat, sender) {
 			if containsBadWord(groupJID, text) {
 				addWarningAuto(groupJID, sender, "Palavra proibida detectada")
@@ -471,11 +331,13 @@ func handleMessage(msg *events.Message) {
 			}
 		}
 
+		// Only admin mode
 		if cfg.OnlyAdm && !isOwner && !isGroupAdmin(chat, sender) {
 			return
 		}
 	}
 
+	// Processar comandos
 	prefix := getPrefix(chat.String())
 	if !strings.HasPrefix(text, prefix) {
 		return
@@ -492,6 +354,7 @@ func handleMessage(msg *events.Message) {
 		args = strings.Join(parts[1:], " ")
 	}
 
+	// Comandos de DONO (somente Erick Machine)
 	if isOwner {
 		switch cmd {
 		case "aluguel", "add_contrat":
@@ -542,6 +405,7 @@ func handleMessage(msg *events.Message) {
 		}
 	}
 
+	// Comandos ADM (admin do grupo ou dono)
 	if isGroup && (isOwner || isGroupAdmin(chat, sender)) {
 		switch cmd {
 		case "ban":
@@ -670,6 +534,7 @@ func handleMessage(msg *events.Message) {
 		}
 	}
 
+	// Comandos de TODOS
 	switch cmd {
 	case "menu":
 		cmdMenu(chat, sender, isOwner, isGroup)
@@ -733,6 +598,206 @@ func handleMessage(msg *events.Message) {
 }
 
 // ============================================================
+// Message Helpers
+// ============================================================
+
+func getMessageText(msg *events.Message) string {
+	if msg.Message == nil {
+		return ""
+	}
+	if msg.Message.Conversation != nil {
+		return *msg.Message.Conversation
+	}
+	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
+		return *msg.Message.ExtendedTextMessage.Text
+	}
+	if msg.Message.ImageMessage != nil && msg.Message.ImageMessage.Caption != nil {
+		return *msg.Message.ImageMessage.Caption
+	}
+	if msg.Message.VideoMessage != nil && msg.Message.VideoMessage.Caption != nil {
+		return *msg.Message.VideoMessage.Caption
+	}
+	return ""
+}
+
+func sendText(chat types.JID, text string) {
+	msg := &waProto.Message{
+		Conversation: proto.String(text),
+	}
+	_, err := client.SendMessage(context.Background(), chat, msg)
+	if err != nil {
+		fmt.Printf("[ERRO] Enviar mensagem: %v\n", err)
+	}
+}
+
+func sendMention(chat types.JID, text string, mentions []string) {
+	jids := make([]string, len(mentions))
+	for i, m := range mentions {
+		jids[i] = m + "@s.whatsapp.net"
+	}
+	msg := &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text: proto.String(text),
+			ContextInfo: &waProto.ContextInfo{
+				MentionedJid: jids,
+			},
+		},
+	}
+	_, err := client.SendMessage(context.Background(), chat, msg)
+	if err != nil {
+		fmt.Printf("[ERRO] Enviar mention: %v\n", err)
+	}
+}
+
+func isOwnerNumber(number string) bool {
+	return number == OwnerNumber || number == "5592996529610"
+}
+
+func getPrefix(groupJID string) string {
+	botData.mu.RLock()
+	defer botData.mu.RUnlock()
+	if cfg, ok := botData.Groups[groupJID]; ok && cfg.Prefix != "" {
+		return cfg.Prefix
+	}
+	return DefaultPrefix
+}
+
+// ============================================================
+// Group Helpers
+// ============================================================
+
+func getGroupConfig(jid string) *GroupConfig {
+	botData.mu.Lock()
+	defer botData.mu.Unlock()
+	if cfg, ok := botData.Groups[jid]; ok {
+		return cfg
+	}
+	cfg := &GroupConfig{
+		JID:        jid,
+		Welcome:    true,
+		WelcomeMsg: "Bem-vindo(a) ao grupo! Leia as regras.",
+		Goodbye:    true,
+		GoodbyeMsg: "Ate mais! Sentiremos sua falta.",
+		Prefix:     DefaultPrefix,
+		Active:     true,
+	}
+	botData.Groups[jid] = cfg
+	saveBotData()
+	return cfg
+}
+
+func isGroupAdmin(chat types.JID, user types.JID) bool {
+	info, err := client.GetGroupInfo(chat)
+	if err != nil {
+		return false
+	}
+	for _, p := range info.Participants {
+		if p.JID.User == user.User {
+			return p.IsAdmin || p.IsSuperAdmin
+		}
+	}
+	return false
+}
+
+func isBotAdmin(chat types.JID) bool {
+	if client.Store.ID == nil {
+		return false
+	}
+	return isGroupAdmin(chat, *client.Store.ID)
+}
+
+func removeMember(chat types.JID, user types.JID) {
+	if !isBotAdmin(chat) {
+		sendText(chat, "*[OdinBOT]* Preciso ser admin para remover membros.")
+		return
+	}
+	_, err := client.UpdateGroupParticipants(chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
+	if err != nil {
+		fmt.Printf("[ERRO] Remover membro: %v\n", err)
+	}
+}
+
+func containsLink(text string) bool {
+	lower := strings.ToLower(text)
+	links := []string{"http://", "https://", "www.", "chat.whatsapp.com", ".com/", ".br/", ".net/", "bit.ly", "wa.me"}
+	for _, l := range links {
+		if strings.Contains(lower, l) {
+			// Permitir youtube, instagram, tiktok
+			allowed := []string{"youtube.com", "youtu.be", "instagram.com", "tiktok.com"}
+			for _, a := range allowed {
+				if strings.Contains(lower, a) {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func containsBadWord(groupJID, text string) bool {
+	botData.mu.RLock()
+	defer botData.mu.RUnlock()
+	words, ok := botData.BadWords[groupJID]
+	if !ok {
+		return false
+	}
+	lower := strings.ToLower(text)
+	for _, w := range words {
+		if strings.Contains(lower, strings.ToLower(w)) {
+			return true
+		}
+	}
+	return false
+}
+
+func isBlacklisted(number string) bool {
+	botData.mu.RLock()
+	defer botData.mu.RUnlock()
+	_, ok := botData.Blacklist[number]
+	return ok
+}
+
+func getMentionedJID(msg *events.Message) *types.JID {
+	if msg.Message == nil {
+		return nil
+	}
+	var ctx *waProto.ContextInfo
+	if msg.Message.ExtendedTextMessage != nil {
+		ctx = msg.Message.ExtendedTextMessage.GetContextInfo()
+	}
+	if ctx == nil {
+		return nil
+	}
+	if len(ctx.MentionedJid) > 0 {
+		jid, err := types.ParseJID(ctx.MentionedJid[0])
+		if err == nil {
+			return &jid
+		}
+	}
+	if ctx.Participant != nil {
+		jid, err := types.ParseJID(*ctx.Participant)
+		if err == nil {
+			return &jid
+		}
+	}
+	return nil
+}
+
+// ============================================================
+// Group Events
+// ============================================================
+
+// handleGroupEvent duplicada removida (já definida acima)
+
+func handleJoinedGroup(evt *events.JoinedGroup) {
+	sendText(evt.JID, fmt.Sprintf(
+		"*%s conectado!*\n\nOla! Sou o %s, bot do %s.\nUse *%smenu* para ver meus comandos.\nDono: %s",
+		BotName, BotName, OwnerName, DefaultPrefix, OwnerName,
+	))
+}
+
+// ============================================================
 // AFK System
 // ============================================================
 
@@ -766,7 +831,7 @@ func cmdListAfk(chat types.JID) {
 	for user, reason := range botData.AfkUsers {
 		msg += fmt.Sprintf("- @%s: %s\n", user, reason)
 	}
-	sendMention(chat, msg, []string{})
+	sendText(chat, msg)
 }
 
 func checkAfk(chat types.JID, sender types.JID, text string) {
@@ -943,7 +1008,7 @@ func cmdSetRole(chat types.JID, msg *events.Message, args string) {
 	botData.Roles[gJID][target.User] = role
 	botData.mu.Unlock()
 	saveBotData()
-	sendMention(chat, fmt.Sprintf("*[OdinBOT]* @%s agora e %s!", target.User, role), []string{target.User})
+	sendText(chat, fmt.Sprintf("*[OdinBOT]* @%s agora e %s!", target.User, role))
 }
 
 // ============================================================
@@ -1001,6 +1066,7 @@ func cmdWarn(chat types.JID, msg *events.Message, issuer types.JID, reason strin
 
 	if count >= 3 {
 		removeMember(chat, *target)
+		// Adicionar na blacklist
 		botData.mu.Lock()
 		botData.Blacklist[target.User] = BlacklistEntry{
 			Number:  target.User,
@@ -1097,14 +1163,10 @@ func cmdListWarnings(chat types.JID) {
 	for _, w := range warns {
 		userWarns[w.UserJID]++
 	}
-	mentions := make([]string, 0, len(userWarns))
-	for user := range userWarns {
-		mentions = append(mentions, user)
-	}
 	for user, count := range userWarns {
 		msg += fmt.Sprintf("- @%s: %d advertencia(s)\n", user, count)
 	}
-	sendMention(chat, msg, mentions)
+	sendText(chat, msg)
 }
 
 func cmdMute(chat types.JID, msg *events.Message) {
@@ -1298,11 +1360,7 @@ func cmdSetGroupDesc(chat types.JID, desc string) {
 		sendText(chat, "*[OdinBOT]* Uso: #descgp Nova descricao")
 		return
 	}
-	err := client.SetGroupTopic(chat, "", "", desc)
-	if err != nil {
-		sendText(chat, "*[OdinBOT]* Erro ao atualizar descrição.")
-		return
-	}
+	client.SetGroupTopic(chat, "", "", desc)
 	sendText(chat, "*[OdinBOT]* Descricao do grupo atualizada!")
 }
 
@@ -1359,6 +1417,7 @@ func cmdBanGhost(chat types.JID) {
 	var ghosts []types.JID
 	for _, p := range info.Participants {
 		if !p.IsAdmin && !p.IsSuperAdmin && !isOwnerNumber(p.JID.User) {
+			// Ghost = sem foto de perfil (simplificacao)
 			_, err := client.GetProfilePictureInfo(p.JID, &whatsmeow.GetProfilePictureParams{})
 			if err != nil {
 				ghosts = append(ghosts, p.JID)
@@ -1518,7 +1577,7 @@ func cmdDelNote(chat types.JID, idx string) {
 	gJID := chat.String()
 	var i int
 	fmt.Sscanf(idx, "%d", &i)
-	i--
+	i-- // 1-indexed
 	botData.mu.Lock()
 	notes := botData.Notes[gJID]
 	if i >= 0 && i < len(notes) {
@@ -1991,56 +2050,10 @@ func cmdBugReport(chat types.JID, sender types.JID, text string) {
 		sendText(chat, "*[OdinBOT]* Descreva o bug/sugestao depois do comando.")
 		return
 	}
+	// Enviar para o dono
 	ownerJID := types.NewJID(OwnerNumber, "s.whatsapp.net")
 	sendText(ownerJID, fmt.Sprintf("*[OdinBOT] Bug/Sugestao*\n\nDe: @%s\nGrupo: %s\n\n%s", sender.User, chat.String(), text))
 	sendText(chat, "*[OdinBOT]* Obrigado! Seu relato foi enviado ao dono.")
-}
-
-// ============================================================
-// Group Event Handler (correta, agora única)
-// ============================================================
-
-func handleGroupEvent(evt *events.GroupInfo) {
-	groupJID := evt.JID.String()
-	cfg := getGroupConfig(groupJID)
-
-	if evt.Join != nil && len(evt.Join) > 0 {
-		if cfg.Welcome {
-			for _, jid := range evt.Join {
-				if isBlacklisted(jid.User) {
-					removeMember(evt.JID, jid)
-					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s esta na lista negra e foi removido.", jid.User))
-					continue
-				}
-				if cfg.Antifake && !strings.HasPrefix(jid.User, "55") {
-					removeMember(evt.JID, jid)
-					sendText(evt.JID, fmt.Sprintf("*[OdinBOT]* @%s removido (numero estrangeiro - anti-fake).", jid.User))
-					continue
-				}
-				msg := cfg.WelcomeMsg
-				msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
-				msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
-				msg = strings.ReplaceAll(msg, "{number}", jid.User)
-				sendMention(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg), []string{jid.User})
-			}
-		}
-	}
-
-	if evt.Leave != nil && len(evt.Leave) > 0 && cfg.Goodbye {
-		for _, jid := range evt.Leave {
-			msg := cfg.GoodbyeMsg
-			msg = strings.ReplaceAll(msg, "{name}", "@"+jid.User)
-			msg = strings.ReplaceAll(msg, "{group}", cfg.Name)
-			sendText(evt.JID, fmt.Sprintf("*[OdinBOT]*\n\n%s", msg))
-		}
-	}
-}
-
-func handleJoinedGroup(evt *events.JoinedGroup) {
-	sendText(evt.JID, fmt.Sprintf(
-		"*%s conectado!*\n\nOla! Sou o %s, bot do %s.\nUse *%smenu* para ver meus comandos.\nDono: %s",
-		BotName, BotName, OwnerName, DefaultPrefix, OwnerName,
-	))
 }
 
 // ============================================================
@@ -2090,6 +2103,7 @@ func rentalChecker() {
 						botData.Rentals[i].EndDate, OwnerName))
 				}
 			} else if endDate.Sub(now).Hours() < 72 {
+				// Aviso 3 dias antes
 				jid, err := types.ParseJID(botData.Rentals[i].GroupJID)
 				if err == nil {
 					days := int(endDate.Sub(now).Hours() / 24)
@@ -2131,6 +2145,7 @@ func loadBotData() *BotData {
 		return data
 	}
 
+	// Garantir mapas nao-nil
 	if data.Groups == nil {
 		data.Groups = make(map[string]*GroupConfig)
 	}
