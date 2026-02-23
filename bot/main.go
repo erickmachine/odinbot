@@ -280,7 +280,7 @@ func sendMention(chat types.JID, text string, mentions []string) {
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text: proto.String(text),
 			ContextInfo: &waProto.ContextInfo{
-				MentionedJid: jids,
+				MentionedJID: jids,
 			},
 		},
 	}
@@ -328,7 +328,7 @@ func getGroupConfig(jid string) *GroupConfig {
 }
 
 func isGroupAdmin(chat types.JID, user types.JID) bool {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return false
 	}
@@ -352,7 +352,7 @@ func removeMember(chat types.JID, user types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin para remover membros.")
 		return
 	}
-	_, err := client.UpdateGroupParticipants(context.Background(), chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
+	_, err := client.UpdateGroupParticipants(chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
 	if err != nil {
 		fmt.Printf("[ERRO] Remover membro: %v\n", err)
 	}
@@ -409,8 +409,8 @@ func getMentionedJID(msg *events.Message) *types.JID {
 	if ctx == nil {
 		return nil
 	}
-	if len(ctx.MentionedJid) > 0 {
-		jid, err := types.ParseJID(ctx.MentionedJid[0])
+	if len(ctx.MentionedJID) > 0 {
+		jid, err := types.ParseJID(ctx.MentionedJID[0])
 		if err == nil {
 			return &jid
 		}
@@ -891,7 +891,7 @@ func cmdNuke(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -902,7 +902,7 @@ func cmdNuke(chat types.JID) {
 		}
 	}
 	if len(toRemove) > 0 {
-		client.UpdateGroupParticipants(context.Background(), chat, toRemove, whatsmeow.ParticipantChangeRemove)
+		client.UpdateGroupParticipants(chat, toRemove, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* Nuke executado. %d membros removidos.", len(toRemove)))
 	}
 }
@@ -1147,7 +1147,7 @@ func cmdPromote(chat types.JID, msg *events.Message) {
 		sendText(chat, "*[OdinBOT]* Mencione alguem para promover.")
 		return
 	}
-	_, err := client.UpdateGroupParticipants(context.Background(), chat, []types.JID{*target}, whatsmeow.ParticipantChangePromote)
+	_, err := client.UpdateGroupParticipants(chat, []types.JID{*target}, whatsmeow.ParticipantChangePromote)
 	if err != nil {
 		sendText(chat, "*[OdinBOT]* Erro ao promover.")
 		return
@@ -1161,7 +1161,7 @@ func cmdDemote(chat types.JID, msg *events.Message) {
 		sendText(chat, "*[OdinBOT]* Mencione alguem para rebaixar.")
 		return
 	}
-	_, err := client.UpdateGroupParticipants(context.Background(), chat, []types.JID{*target}, whatsmeow.ParticipantChangeDemote)
+	_, err := client.UpdateGroupParticipants(chat, []types.JID{*target}, whatsmeow.ParticipantChangeDemote)
 	if err != nil {
 		sendText(chat, "*[OdinBOT]* Erro ao rebaixar.")
 		return
@@ -1272,7 +1272,7 @@ func cmdCloseGroup(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	client.SetGroupAnnounce(context.Background(), chat, true)
+	client.SetGroupAnnounce(chat, true)
 	sendText(chat, "*[OdinBOT]* Grupo fechado! Somente admins podem enviar mensagens.")
 }
 
@@ -1281,7 +1281,7 @@ func cmdOpenGroup(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	client.SetGroupAnnounce(context.Background(), chat, false)
+	client.SetGroupAnnounce(chat, false)
 	sendText(chat, "*[OdinBOT]* Grupo aberto! Todos podem enviar mensagens.")
 }
 
