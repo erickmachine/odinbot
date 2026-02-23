@@ -639,7 +639,7 @@ func sendMention(chat types.JID, text string, mentions []string) {
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text: proto.String(text),
 			ContextInfo: &waProto.ContextInfo{
-				MentionedJid: jids,
+				MentionedJID: jids,
 			},
 		},
 	}
@@ -769,8 +769,8 @@ func getMentionedJID(msg *events.Message) *types.JID {
 	if ctx == nil {
 		return nil
 	}
-	if len(ctx.MentionedJid) > 0 {
-		jid, err := types.ParseJID(ctx.MentionedJid[0])
+	if len(ctx.MentionedJID) > 0 {
+		jid, err := types.ParseJID(ctx.MentionedJID[0])
 		if err == nil {
 			return &jid
 		}
