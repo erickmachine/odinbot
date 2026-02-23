@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -16,7 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	waE2E "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -146,7 +145,7 @@ func main() {
 	client.AddEventHandler(eventHandler)
 
 	if client.Store.ID == nil {
-		qrChan, _ := client.GetQRChannel(context.Background())
+		qrChan, _ := client.GetQRChannel()
 		if err := client.Connect(); err != nil {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
@@ -262,10 +261,10 @@ func getMessageText(msg *events.Message) string {
 }
 
 func sendText(chat types.JID, text string) {
-	msg := &waProto.Message{
+	msg := &waE2E.Message{
 		Conversation: proto.String(text),
 	}
-	_, err := client.SendMessage(context.Background(), chat, msg)
+	_, err := client.SendMessage(chat, msg)
 	if err != nil {
 		fmt.Printf("[ERRO] Enviar mensagem: %v\n", err)
 	}
@@ -276,15 +275,15 @@ func sendMention(chat types.JID, text string, mentions []string) {
 	for i, m := range mentions {
 		jids[i] = m + "@s.whatsapp.net"
 	}
-	msg := &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+	msg := &waE2E.Message{
+		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
-			ContextInfo: &waProto.ContextInfo{
-				MentionedJID: jids,
+			ContextInfo: &waE2E.ContextInfo{
+				MentionedJid: jids,
 			},
 		},
 	}
-	_, err := client.SendMessage(context.Background(), chat, msg)
+	_, err := client.SendMessage(chat, msg)
 	if err != nil {
 		fmt.Printf("[ERRO] Enviar mention: %v\n", err)
 	}
@@ -402,15 +401,15 @@ func getMentionedJID(msg *events.Message) *types.JID {
 	if msg.Message == nil {
 		return nil
 	}
-	var ctx *waProto.ContextInfo
+	var ctx *waE2E.ContextInfo
 	if msg.Message.ExtendedTextMessage != nil {
 		ctx = msg.Message.ExtendedTextMessage.GetContextInfo()
 	}
 	if ctx == nil {
 		return nil
 	}
-	if len(ctx.MentionedJID) > 0 {
-		jid, err := types.ParseJID(ctx.MentionedJID[0])
+	if len(ctx.MentionedJid) > 0 {
+		jid, err := types.ParseJID(ctx.MentionedJid[0])
 		if err == nil {
 			return &jid
 		}
@@ -1290,7 +1289,7 @@ func cmdSetGroupName(chat types.JID, name string) {
 		sendText(chat, "*[OdinBOT]* Uso: #nomegp Novo Nome")
 		return
 	}
-	client.SetGroupName(context.Background(), chat, name)
+	client.SetGroupName(chat, name)
 	sendText(chat, fmt.Sprintf("*[OdinBOT]* Nome do grupo alterado para: %s", name))
 }
 
@@ -1299,7 +1298,7 @@ func cmdSetGroupDesc(chat types.JID, desc string) {
 		sendText(chat, "*[OdinBOT]* Uso: #descgp Nova descricao")
 		return
 	}
-	err := client.SetGroupTopic(context.Background(), chat, "", "", desc)
+	err := client.SetGroupTopic(chat, "", "", desc)
 	if err != nil {
 		sendText(chat, "*[OdinBOT]* Erro ao atualizar descrição.")
 		return
@@ -1308,7 +1307,7 @@ func cmdSetGroupDesc(chat types.JID, desc string) {
 }
 
 func cmdGetGroupLink(chat types.JID) {
-	link, err := client.GetGroupInviteLink(context.Background(), chat, false)
+	link, err := client.GetGroupInviteLink(chat, false)
 	if err != nil {
 		sendText(chat, "*[OdinBOT]* Erro ao obter link. Preciso ser admin.")
 		return
@@ -1317,7 +1316,7 @@ func cmdGetGroupLink(chat types.JID) {
 }
 
 func cmdTagAll(chat types.JID, text string) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1334,7 +1333,7 @@ func cmdTagAll(chat types.JID, text string) {
 }
 
 func cmdHideTag(chat types.JID, text string) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1353,7 +1352,7 @@ func cmdBanGhost(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1367,7 +1366,7 @@ func cmdBanGhost(chat types.JID) {
 		}
 	}
 	if len(ghosts) > 0 {
-		client.UpdateGroupParticipants(context.Background(), chat, ghosts, whatsmeow.ParticipantChangeRemove)
+		client.UpdateGroupParticipants(chat, ghosts, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* %d ghosts removidos!", len(ghosts)))
 	} else {
 		sendText(chat, "*[OdinBOT]* Nenhum ghost encontrado.")
@@ -1379,7 +1378,7 @@ func cmdBanFakes(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1392,7 +1391,7 @@ func cmdBanFakes(chat types.JID) {
 		}
 	}
 	if len(fakes) > 0 {
-		client.UpdateGroupParticipants(context.Background(), chat, fakes, whatsmeow.ParticipantChangeRemove)
+		client.UpdateGroupParticipants(chat, fakes, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* %d fakes (numeros estrangeiros) removidos!", len(fakes)))
 	} else {
 		sendText(chat, "*[OdinBOT]* Nenhum fake encontrado.")
@@ -1400,7 +1399,7 @@ func cmdBanFakes(chat types.JID) {
 }
 
 func cmdSorteio(chat types.JID) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1534,7 +1533,7 @@ func cmdDelNote(chat types.JID, idx string) {
 }
 
 func cmdGroupInfo(chat types.JID) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		sendText(chat, "*[OdinBOT]* Erro ao obter info do grupo.")
 		return
@@ -1556,7 +1555,7 @@ func cmdGroupInfo(chat types.JID) {
 }
 
 func cmdListAdmins(chat types.JID) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1576,7 +1575,7 @@ func cmdListAdmins(chat types.JID) {
 }
 
 func cmdRoleta(chat types.JID) {
-	info, err := client.GetGroupInfo(context.Background(), chat)
+	info, err := client.GetGroupInfo(chat)
 	if err != nil {
 		return
 	}
@@ -1998,7 +1997,7 @@ func cmdBugReport(chat types.JID, sender types.JID, text string) {
 }
 
 // ============================================================
-// Group Event Handler (correta)
+// Group Event Handler (correta, agora única)
 // ============================================================
 
 func handleGroupEvent(evt *events.GroupInfo) {
