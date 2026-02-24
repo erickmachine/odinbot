@@ -231,11 +231,11 @@ func eventHandler(evt interface{}) {
 		_ = client.SendPresence(context.Background(), types.PresenceAvailable)
 		_ = v // avoid unused
 	case *events.Message:
-		handleMessage(v)
+		go handleMessage(v)
 	case *events.GroupInfo:
-		handleGroupEvent(v)
+		go handleGroupEvent(v)
 	case *events.JoinedGroup:
-		handleJoinedGroup(v)
+		go handleJoinedGroup(v)
 	case *events.Disconnected:
 		fmt.Println("[OdinBOT] Evento: Desconectado!")
 	}
