@@ -16,7 +16,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -30,9 +30,9 @@ import (
 // ============================================================
 
 const (
-	BotName     = "OdinBOT"
-	OwnerName   = "Erick Machine"
-	OwnerNumber = "5592996529610"
+	BotName       = "OdinBOT"
+	OwnerName     = "Erick Machine"
+	OwnerNumber   = "5592996529610"
 	DefaultPrefix = "#"
 )
 
@@ -41,37 +41,37 @@ const (
 // ============================================================
 
 type GroupConfig struct {
-	JID           string   `json:"jid"`
-	Name          string   `json:"name"`
-	Welcome       bool     `json:"welcome"`
-	WelcomeMsg    string   `json:"welcome_msg"`
-	Goodbye       bool     `json:"goodbye"`
-	GoodbyeMsg    string   `json:"goodbye_msg"`
-	Antilink      bool     `json:"antilink"`
-	Antifake      bool     `json:"antifake"`
-	Antiflood     bool     `json:"antiflood"`
-	NSFW          bool     `json:"nsfw"`
-	AutoSticker   bool     `json:"auto_sticker"`
-	Prefix        string   `json:"prefix"`
-	Active        bool     `json:"active"`
-	AntiPalavrao  bool     `json:"anti_palavrao"`
-	OnlyAdm       bool     `json:"only_adm"`
-	AutoDL        bool     `json:"auto_dl"`
-	AntiBot       bool     `json:"anti_bot"`
-	ModoRPG       bool     `json:"modo_rpg"`
+	JID          string `json:"jid"`
+	Name         string `json:"name"`
+	Welcome      bool   `json:"welcome"`
+	WelcomeMsg   string `json:"welcome_msg"`
+	Goodbye      bool   `json:"goodbye"`
+	GoodbyeMsg   string `json:"goodbye_msg"`
+	Antilink     bool   `json:"antilink"`
+	Antifake     bool   `json:"antifake"`
+	Antiflood    bool   `json:"antiflood"`
+	NSFW         bool   `json:"nsfw"`
+	AutoSticker  bool   `json:"auto_sticker"`
+	Prefix       string `json:"prefix"`
+	Active       bool   `json:"active"`
+	AntiPalavrao bool   `json:"anti_palavrao"`
+	OnlyAdm      bool   `json:"only_adm"`
+	AutoDL       bool   `json:"auto_dl"`
+	AntiBot      bool   `json:"anti_bot"`
+	ModoRPG      bool   `json:"modo_rpg"`
 }
 
 type Rental struct {
-	GroupJID   string  `json:"group_jid"`
-	GroupName  string  `json:"group_name"`
-	OwnerNum   string  `json:"owner_number"`
-	OwnerName  string  `json:"owner_name"`
-	Plan       string  `json:"plan"`
-	StartDate  string  `json:"start_date"`
-	EndDate    string  `json:"end_date"`
-	Value      float64 `json:"value"`
-	Active     bool    `json:"active"`
-	Notes      string  `json:"notes"`
+	GroupJID  string  `json:"group_jid"`
+	GroupName string  `json:"group_name"`
+	OwnerNum  string  `json:"owner_number"`
+	OwnerName string  `json:"owner_name"`
+	Plan      string  `json:"plan"`
+	StartDate string  `json:"start_date"`
+	EndDate   string  `json:"end_date"`
+	Value     float64 `json:"value"`
+	Active    bool    `json:"active"`
+	Notes     string  `json:"notes"`
 }
 
 type Warning struct {
@@ -92,15 +92,15 @@ type BlacklistEntry struct {
 
 type BotData struct {
 	mu         sync.RWMutex
-	Groups     map[string]*GroupConfig    `json:"groups"`
-	Rentals    []Rental                   `json:"rentals"`
-	Warnings   map[string][]Warning       `json:"warnings"`
-	Blacklist  map[string]BlacklistEntry   `json:"blacklist"`
-	BadWords   map[string][]string        `json:"bad_words"`
-	Notes      map[string][]string        `json:"notes"`
-	MutedUsers map[string]map[string]bool `json:"muted_users"`
-	AfkUsers   map[string]string          `json:"afk_users"`
-	Roles      map[string]map[string]string `json:"roles"` // group -> user -> role
+	Groups     map[string]*GroupConfig      `json:"groups"`
+	Rentals    []Rental                     `json:"rentals"`
+	Warnings   map[string][]Warning         `json:"warnings"`
+	Blacklist  map[string]BlacklistEntry     `json:"blacklist"`
+	BadWords   map[string][]string          `json:"bad_words"`
+	Notes      map[string][]string          `json:"notes"`
+	MutedUsers map[string]map[string]bool   `json:"muted_users"`
+	AfkUsers   map[string]string            `json:"afk_users"`
+	Roles      map[string]map[string]string `json:"roles"`
 }
 
 var (
@@ -114,11 +114,11 @@ var (
 // ============================================================
 
 func main() {
-	fmt.Println("╔══════════════════════════════════════╗")
-	fmt.Println("║         OdinBOT - Iniciando          ║")
-	fmt.Println("║    Dono: Erick Machine               ║")
-	fmt.Println("║    Numero: +55 92 99652-9610         ║")
-	fmt.Println("╚══════════════════════════════════════╝")
+	fmt.Println("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557")
+	fmt.Println("\u2551         OdinBOT - Iniciando          \u2551")
+	fmt.Println("\u2551    Dono: Erick Machine               \u2551")
+	fmt.Println("\u2551    Numero: +55 92 99652-9610         \u2551")
+	fmt.Println("\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d")
 
 	dataDir = filepath.Join(".", "data")
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -129,15 +129,13 @@ func main() {
 	botData = loadBotData()
 
 	dbLog := waLog.Stdout("Database", "WARN", true)
-	container, err := sqlstore.New(context.Background(), "sqlite3", "file:odinbot.db?_foreign_keys=on", dbLog)
-
+	container, err := sqlstore.New("sqlite3", "file:odinbot.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		fmt.Printf("[ERRO] Banco de dados: %v\n", err)
 		os.Exit(1)
 	}
 
-	deviceStore, err := container.GetFirstDevice(context.Background())
-
+	deviceStore, err := container.GetFirstDevice()
 	if err != nil {
 		fmt.Printf("[ERRO] Dispositivo: %v\n", err)
 		os.Exit(1)
@@ -153,11 +151,11 @@ func main() {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Println("\n╔══════════════════════════════════════╗")
-		fmt.Println("║     ESCANEIE O QR CODE ABAIXO       ║")
-		fmt.Println("║  Abra WhatsApp > Aparelhos Conectados ║")
-		fmt.Println("║  > Conectar Aparelho > Escanear QR   ║")
-		fmt.Println("╚══════════════════════════════════════╝")
+		fmt.Println("\n\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557")
+		fmt.Println("\u2551     ESCANEIE O QR CODE ABAIXO       \u2551")
+		fmt.Println("\u2551  Abra WhatsApp > Aparelhos Conectados \u2551")
+		fmt.Println("\u2551  > Conectar Aparelho > Escanear QR   \u2551")
+		fmt.Println("\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d")
 		for evt := range qrChan {
 			if evt.Event == "code" {
 				fmt.Println("")
@@ -165,7 +163,6 @@ func main() {
 				fmt.Println("")
 				fmt.Println("[QR] Escaneie o QR acima com seu WhatsApp")
 				fmt.Println("[QR] O QR expira em 20 segundos, aguarde novo se precisar...")
-				// Salvar QR code como texto para o painel web consumir
 				qrData := map[string]string{
 					"code":    evt.Code,
 					"status":  "waiting",
@@ -175,7 +172,6 @@ func main() {
 				_ = os.WriteFile(filepath.Join(dataDir, "qrcode.json"), qrJSON, 0644)
 			} else if evt.Event == "success" {
 				fmt.Println("[QR] Pareamento realizado com sucesso!")
-				// Atualizar status
 				qrData := map[string]string{
 					"code":    "",
 					"status":  "connected",
@@ -202,7 +198,6 @@ func main() {
 			fmt.Printf("[ERRO] Conectar: %v\n", err)
 			os.Exit(1)
 		}
-		// Marcar como conectado
 		qrData := map[string]string{
 			"code":    "",
 			"status":  "connected",
@@ -233,8 +228,8 @@ func eventHandler(evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Connected:
 		fmt.Println("[OdinBOT] Evento: Conectado com sucesso!")
-		// Marcar como online
 		_ = client.SendPresence(types.PresenceAvailable)
+		_ = v // avoid unused
 	case *events.Message:
 		handleMessage(v)
 	case *events.GroupInfo:
@@ -285,7 +280,6 @@ func handleGroupEvent(evt *events.GroupInfo) {
 }
 
 func handleMessage(msg *events.Message) {
-	// Ignorar mensagens do proprio bot
 	if msg.Info.IsFromMe {
 		return
 	}
@@ -607,23 +601,23 @@ func getMessageText(msg *events.Message) string {
 	if msg.Message == nil {
 		return ""
 	}
-	if msg.Message.Conversation != nil {
-		return *msg.Message.Conversation
+	if msg.Message.GetConversation() != "" {
+		return msg.Message.GetConversation()
 	}
-	if msg.Message.ExtendedTextMessage != nil && msg.Message.ExtendedTextMessage.Text != nil {
-		return *msg.Message.ExtendedTextMessage.Text
+	if msg.Message.GetExtendedTextMessage() != nil {
+		return msg.Message.GetExtendedTextMessage().GetText()
 	}
-	if msg.Message.ImageMessage != nil && msg.Message.ImageMessage.Caption != nil {
-		return *msg.Message.ImageMessage.Caption
+	if msg.Message.GetImageMessage() != nil {
+		return msg.Message.GetImageMessage().GetCaption()
 	}
-	if msg.Message.VideoMessage != nil && msg.Message.VideoMessage.Caption != nil {
-		return *msg.Message.VideoMessage.Caption
+	if msg.Message.GetVideoMessage() != nil {
+		return msg.Message.GetVideoMessage().GetCaption()
 	}
 	return ""
 }
 
 func sendText(chat types.JID, text string) {
-	msg := &waProto.Message{
+	msg := &waE2E.Message{
 		Conversation: proto.String(text),
 	}
 	_, err := client.SendMessage(context.Background(), chat, msg)
@@ -637,10 +631,10 @@ func sendMention(chat types.JID, text string, mentions []string) {
 	for i, m := range mentions {
 		jids[i] = m + "@s.whatsapp.net"
 	}
-	msg := &waProto.Message{
-		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+	msg := &waE2E.Message{
+		ExtendedTextMessage: &waE2E.ExtendedTextMessage{
 			Text: proto.String(text),
-			ContextInfo: &waProto.ContextInfo{
+			ContextInfo: &waE2E.ContextInfo{
 				MentionedJID: jids,
 			},
 		},
@@ -724,7 +718,6 @@ func containsLink(text string) bool {
 	links := []string{"http://", "https://", "www.", "chat.whatsapp.com", ".com/", ".br/", ".net/", "bit.ly", "wa.me"}
 	for _, l := range links {
 		if strings.Contains(lower, l) {
-			// Permitir youtube, instagram, tiktok
 			allowed := []string{"youtube.com", "youtu.be", "instagram.com", "tiktok.com"}
 			for _, a := range allowed {
 				if strings.Contains(lower, a) {
@@ -764,21 +757,21 @@ func getMentionedJID(msg *events.Message) *types.JID {
 	if msg.Message == nil {
 		return nil
 	}
-	var ctx *waProto.ContextInfo
-	if msg.Message.ExtendedTextMessage != nil {
-		ctx = msg.Message.ExtendedTextMessage.GetContextInfo()
+	var ctx *waE2E.ContextInfo
+	if msg.Message.GetExtendedTextMessage() != nil {
+		ctx = msg.Message.GetExtendedTextMessage().GetContextInfo()
 	}
 	if ctx == nil {
 		return nil
 	}
-	if len(ctx.MentionedJID) > 0 {
-		jid, err := types.ParseJID(ctx.MentionedJID[0])
+	if len(ctx.GetMentionedJID()) > 0 {
+		jid, err := types.ParseJID(ctx.GetMentionedJID()[0])
 		if err == nil {
 			return &jid
 		}
 	}
-	if ctx.Participant != nil {
-		jid, err := types.ParseJID(*ctx.Participant)
+	if ctx.GetParticipant() != "" {
+		jid, err := types.ParseJID(ctx.GetParticipant())
 		if err == nil {
 			return &jid
 		}
@@ -789,8 +782,6 @@ func getMentionedJID(msg *events.Message) *types.JID {
 // ============================================================
 // Group Events
 // ============================================================
-
-// handleGroupEvent duplicada removida (já definida acima)
 
 func handleJoinedGroup(evt *events.JoinedGroup) {
 	sendText(evt.JID, fmt.Sprintf(
@@ -836,7 +827,7 @@ func cmdListAfk(chat types.JID) {
 	sendText(chat, msg)
 }
 
-func checkAfk(chat types.JID, sender types.JID, text string) {
+func checkAfk(chat types.JID, sender types.JID, _ string) {
 	botData.mu.RLock()
 	reason, ok := botData.AfkUsers[sender.User]
 	botData.mu.RUnlock()
@@ -866,15 +857,15 @@ func cmdAluguel(chat types.JID, args string) {
 		ownerName = strings.TrimSpace(parts[5])
 	}
 	rental := Rental{
-		GroupJID:   strings.TrimSpace(parts[0]),
-		GroupName:  strings.TrimSpace(parts[1]),
-		OwnerNum:   strings.TrimSpace(parts[2]),
-		OwnerName:  ownerName,
-		Plan:       strings.TrimSpace(parts[3]),
-		Value:      val,
-		StartDate:  time.Now().Format("2006-01-02"),
-		EndDate:    calcEndDate(strings.TrimSpace(parts[3])),
-		Active:     true,
+		GroupJID:  strings.TrimSpace(parts[0]),
+		GroupName: strings.TrimSpace(parts[1]),
+		OwnerNum:  strings.TrimSpace(parts[2]),
+		OwnerName: ownerName,
+		Plan:      strings.TrimSpace(parts[3]),
+		Value:     val,
+		StartDate: time.Now().Format("2006-01-02"),
+		EndDate:   calcEndDate(strings.TrimSpace(parts[3])),
+		Active:    true,
 	}
 	botData.mu.Lock()
 	botData.Rentals = append(botData.Rentals, rental)
@@ -949,7 +940,7 @@ func cmdJoin(link string) {
 func cmdLeaveGroup(chat types.JID) {
 	sendText(chat, "*[OdinBOT]* Saindo do grupo... Ate mais!")
 	time.Sleep(1 * time.Second)
-	client.LeaveGroup(chat)
+	_ = client.LeaveGroup(chat)
 }
 
 func cmdNuke(chat types.JID) {
@@ -968,7 +959,7 @@ func cmdNuke(chat types.JID) {
 		}
 	}
 	if len(toRemove) > 0 {
-		client.UpdateGroupParticipants(chat, toRemove, whatsmeow.ParticipantChangeRemove)
+		_, _ = client.UpdateGroupParticipants(chat, toRemove, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* Nuke executado. %d membros removidos.", len(toRemove)))
 	}
 }
@@ -1068,7 +1059,6 @@ func cmdWarn(chat types.JID, msg *events.Message, issuer types.JID, reason strin
 
 	if count >= 3 {
 		removeMember(chat, *target)
-		// Adicionar na blacklist
 		botData.mu.Lock()
 		botData.Blacklist[target.User] = BlacklistEntry{
 			Number:  target.User,
@@ -1335,7 +1325,7 @@ func cmdCloseGroup(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	client.SetGroupAnnounce(chat, true)
+	_ = client.SetGroupAnnounce(chat, true)
 	sendText(chat, "*[OdinBOT]* Grupo fechado! Somente admins podem enviar mensagens.")
 }
 
@@ -1344,7 +1334,7 @@ func cmdOpenGroup(chat types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin.")
 		return
 	}
-	client.SetGroupAnnounce(chat, false)
+	_ = client.SetGroupAnnounce(chat, false)
 	sendText(chat, "*[OdinBOT]* Grupo aberto! Todos podem enviar mensagens.")
 }
 
@@ -1353,7 +1343,7 @@ func cmdSetGroupName(chat types.JID, name string) {
 		sendText(chat, "*[OdinBOT]* Uso: #nomegp Novo Nome")
 		return
 	}
-	client.SetGroupName(chat, name)
+	_ = client.SetGroupName(chat, name)
 	sendText(chat, fmt.Sprintf("*[OdinBOT]* Nome do grupo alterado para: %s", name))
 }
 
@@ -1362,7 +1352,7 @@ func cmdSetGroupDesc(chat types.JID, desc string) {
 		sendText(chat, "*[OdinBOT]* Uso: #descgp Nova descricao")
 		return
 	}
-	client.SetGroupTopic(chat, "", "", desc)
+	_ = client.SetGroupTopic(chat, "", "", desc)
 	sendText(chat, "*[OdinBOT]* Descricao do grupo atualizada!")
 }
 
@@ -1419,7 +1409,6 @@ func cmdBanGhost(chat types.JID) {
 	var ghosts []types.JID
 	for _, p := range info.Participants {
 		if !p.IsAdmin && !p.IsSuperAdmin && !isOwnerNumber(p.JID.User) {
-			// Ghost = sem foto de perfil (simplificacao)
 			_, err := client.GetProfilePictureInfo(p.JID, &whatsmeow.GetProfilePictureParams{})
 			if err != nil {
 				ghosts = append(ghosts, p.JID)
@@ -1427,7 +1416,7 @@ func cmdBanGhost(chat types.JID) {
 		}
 	}
 	if len(ghosts) > 0 {
-		client.UpdateGroupParticipants(chat, ghosts, whatsmeow.ParticipantChangeRemove)
+		_, _ = client.UpdateGroupParticipants(chat, ghosts, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* %d ghosts removidos!", len(ghosts)))
 	} else {
 		sendText(chat, "*[OdinBOT]* Nenhum ghost encontrado.")
@@ -1452,7 +1441,7 @@ func cmdBanFakes(chat types.JID) {
 		}
 	}
 	if len(fakes) > 0 {
-		client.UpdateGroupParticipants(chat, fakes, whatsmeow.ParticipantChangeRemove)
+		_, _ = client.UpdateGroupParticipants(chat, fakes, whatsmeow.ParticipantChangeRemove)
 		sendText(chat, fmt.Sprintf("*[OdinBOT]* %d fakes (numeros estrangeiros) removidos!", len(fakes)))
 	} else {
 		sendText(chat, "*[OdinBOT]* Nenhum fake encontrado.")
@@ -1579,7 +1568,7 @@ func cmdDelNote(chat types.JID, idx string) {
 	gJID := chat.String()
 	var i int
 	fmt.Sscanf(idx, "%d", &i)
-	i-- // 1-indexed
+	i--
 	botData.mu.Lock()
 	notes := botData.Notes[gJID]
 	if i >= 0 && i < len(notes) {
@@ -1835,11 +1824,11 @@ func cmdDono(chat types.JID) {
 	sendText(chat, fmt.Sprintf("*[OdinBOT]*\n\nDono: %s\nNumero: +55 92 99652-9610\nContato: wa.me/5592996529610", OwnerName))
 }
 
-func cmdSticker(chat types.JID, msg *events.Message) {
+func cmdSticker(chat types.JID, _ *events.Message) {
 	sendText(chat, "*[OdinBOT]* Envie uma imagem/video com a legenda #s para criar figurinha.")
 }
 
-func cmdToImg(chat types.JID, msg *events.Message) {
+func cmdToImg(chat types.JID, _ *events.Message) {
 	sendText(chat, "*[OdinBOT]* Responda uma figurinha com #toimg para converter.")
 }
 
@@ -1847,7 +1836,7 @@ func cmdProfile(chat types.JID, sender types.JID) {
 	sendText(chat, fmt.Sprintf("*[OdinBOT] Perfil:*\n\n- Numero: @%s\n- JID: %s", sender.User, sender.String()))
 }
 
-func cmdSimi(chat types.JID, text string) {
+func cmdSimi(chat types.JID, _ string) {
 	responses := []string{
 		"Hmm, interessante!",
 		"Concordo totalmente!",
@@ -1905,11 +1894,11 @@ func cmdRankAtivos(chat types.JID) {
 	sendText(chat, "*[OdinBOT]* Rank de ativos em desenvolvimento. Use o painel web para ver estatisticas.")
 }
 
-func cmdPPT(chat types.JID, sender types.JID, choice string) {
+func cmdPPT(chat types.JID, _ types.JID, choice string) {
 	options := []string{"pedra", "papel", "tesoura"}
 	choice = strings.ToLower(strings.TrimSpace(choice))
 	if choice != "pedra" && choice != "papel" && choice != "tesoura" {
-		sendText(chat, fmt.Sprintf("*[OdinBOT]* Uso: #ppt pedra/papel/tesoura"))
+		sendText(chat, "*[OdinBOT]* Uso: #ppt pedra/papel/tesoura")
 		return
 	}
 	bot := options[rand.Intn(3)]
@@ -2009,7 +1998,7 @@ func cmdMoedas(chat types.JID) {
 	sendText(chat, fmt.Sprintf("*[OdinBOT]* Moeda: *%s*!", result))
 }
 
-func cmdHelp(chat types.JID, sender types.JID) {
+func cmdHelp(chat types.JID, _ types.JID) {
 	prefix := getPrefix(chat.String())
 	sendText(chat, fmt.Sprintf(`*[OdinBOT] Como usar:*
 
@@ -2052,7 +2041,6 @@ func cmdBugReport(chat types.JID, sender types.JID, text string) {
 		sendText(chat, "*[OdinBOT]* Descreva o bug/sugestao depois do comando.")
 		return
 	}
-	// Enviar para o dono
 	ownerJID := types.NewJID(OwnerNumber, "s.whatsapp.net")
 	sendText(ownerJID, fmt.Sprintf("*[OdinBOT] Bug/Sugestao*\n\nDe: @%s\nGrupo: %s\n\n%s", sender.User, chat.String(), text))
 	sendText(chat, "*[OdinBOT]* Obrigado! Seu relato foi enviado ao dono.")
@@ -2105,7 +2093,6 @@ func rentalChecker() {
 						botData.Rentals[i].EndDate, OwnerName))
 				}
 			} else if endDate.Sub(now).Hours() < 72 {
-				// Aviso 3 dias antes
 				jid, err := types.ParseJID(botData.Rentals[i].GroupJID)
 				if err == nil {
 					days := int(endDate.Sub(now).Hours() / 24)
