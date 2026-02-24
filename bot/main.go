@@ -224,21 +224,24 @@ func main() {
 // Event Handler
 // ============================================================
 
-func eventHandler(evt interface{}) {
-	switch v := evt.(type) {
-	case *events.Connected:
-		fmt.Println("[OdinBOT] Evento: Conectado com sucesso!")
-		_ = client.SendPresence(context.Background(), types.PresenceAvailable)
-		_ = v // avoid unused
-	case *events.Message:
-		go handleMessage(v)
-	case *events.GroupInfo:
-		go handleGroupEvent(v)
-	case *events.JoinedGroup:
-		go handleJoinedGroup(v)
-	case *events.Disconnected:
-		fmt.Println("[OdinBOT] Evento: Desconectado!")
-	}
+func eventHandler(rawEvt interface{}) {
+	// Dispatch ALL events asynchronously so we never block whatsmeow's node processing pipeline.
+	go func(evt interface{}) {
+		switch v := evt.(type) {
+		case *events.Connected:
+			fmt.Println("[OdinBOT] Evento: Conectado com sucesso!")
+			_ = client.SendPresence(context.Background(), types.PresenceAvailable)
+			_ = v // avoid unused
+		case *events.Message:
+			handleMessage(v)
+		case *events.GroupInfo:
+			handleGroupEvent(v)
+		case *events.JoinedGroup:
+			handleJoinedGroup(v)
+		case *events.Disconnected:
+			fmt.Println("[OdinBOT] Evento: Desconectado!")
+		}
+	}(rawEvt)
 }
 
 func handleGroupEvent(evt *events.GroupInfo) {
@@ -617,16 +620,20 @@ func getMessageText(msg *events.Message) string {
 }
 
 func sendText(chat types.JID, text string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	msg := &waE2E.Message{
 		Conversation: proto.String(text),
 	}
-	_, err := client.SendMessage(context.Background(), chat, msg)
+	_, err := client.SendMessage(ctx, chat, msg)
 	if err != nil {
 		fmt.Printf("[ERRO] Enviar mensagem: %v\n", err)
 	}
 }
 
 func sendMention(chat types.JID, text string, mentions []string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	jids := make([]string, len(mentions))
 	for i, m := range mentions {
 		jids[i] = m + "@s.whatsapp.net"
@@ -639,7 +646,7 @@ func sendMention(chat types.JID, text string, mentions []string) {
 			},
 		},
 	}
-	_, err := client.SendMessage(context.Background(), chat, msg)
+	_, err := client.SendMessage(ctx, chat, msg)
 	if err != nil {
 		fmt.Printf("[ERRO] Enviar mention: %v\n", err)
 	}
@@ -707,7 +714,9 @@ func removeMember(chat types.JID, user types.JID) {
 		sendText(chat, "*[OdinBOT]* Preciso ser admin para remover membros.")
 		return
 	}
-	_, err := client.UpdateGroupParticipants(context.Background(), chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_, err := client.UpdateGroupParticipants(ctx, chat, []types.JID{user}, whatsmeow.ParticipantChangeRemove)
 	if err != nil {
 		fmt.Printf("[ERRO] Remover membro: %v\n", err)
 	}
