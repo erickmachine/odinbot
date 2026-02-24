@@ -32,7 +32,7 @@ import (
 const (
 	BotName       = "OdinBOT"
 	OwnerName     = "Erick Machine"
-	OwnerNumber   = "5592996529610"
+	OwnerNumber   = "559299652961"
 	DefaultPrefix = "#"
 )
 
@@ -117,7 +117,7 @@ func main() {
 	fmt.Println("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557")
 	fmt.Println("\u2551         OdinBOT - Iniciando          \u2551")
 	fmt.Println("\u2551    Dono: Erick Machine               \u2551")
-	fmt.Println("\u2551    Numero: +55 92 99652-9610         \u2551")
+	fmt.Println("\u2551    Numero: +55 92 9965-2961        \u2551")
 	fmt.Println("\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d")
 
 	dataDir = filepath.Join(".", "data")
